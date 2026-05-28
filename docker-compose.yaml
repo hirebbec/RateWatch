@@ -1,0 +1,177 @@
+services:
+  rate-watch:
+    container_name: rate-watch-${ENVIRONMENT}
+    restart: always
+    build:
+      context: ./src
+    working_dir: /usr/RateWatch/src
+    command: sh -c "
+      alembic upgrade head &&
+      python main.py
+      "
+    env_file: ./src/.env.${ENVIRONMENT}
+    networks:
+      - rate-watch-network
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      - rate-watch-db
+      - rate-watch-s3
+    healthcheck:
+      test: curl -f http://localhost:${SERVER_PORT}/api/healthcheck
+      interval: 60s
+      timeout: 3s
+      retries: 3
+
+  rate-watch-db:
+    image: postgres:14.23
+    container_name: rate-watch-db-${ENVIRONMENT}
+    restart: always
+    command: -p ${POSTGRES_PORT}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    networks:
+      - rate-watch-network
+    expose:
+      - ${POSTGRES_PORT}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - rate-watch-db-data:/var/lib/postgresql/data/
+      - ./src/entrypoint-db.sh:/entrypoint-db.sh:ro
+    healthcheck:
+      test: pg_isready -p ${POSTGRES_PORT} -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      interval: 60s
+      timeout: 3s
+      retries: 3
+
+  rate-watch-s3:
+    image: bitnami/minio:2024.12.18
+    container_name: rate-watch-s3-${ENVIRONMENT}
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_DEFAULT_BUCKETS=${MINIO_DEFAULT_BUCKET}
+    networks:
+      - rate-watch-network
+    expose:
+      - ${MINIO_PORT}
+      - ${MINIO_WEB_PORT}
+    ports:
+      - ${MINIO_PORT}:${MINIO_PORT}
+      - ${MINIO_WEB_PORT}:${MINIO_WEB_PORT}
+    command: minio server --address :${MINIO_PORT} --console-address :${MINIO_WEB_PORT} /bitnami/minio/data
+    volumes:
+      - rate-watch-s3-data:/bitnami/minio/data
+    healthcheck:
+      test: curl -f http://rate-watch-s3:${MINIO_PORT}/minio/health/live
+      interval: 60s
+      timeout: 3s
+      retries: 3
+
+  rate-watch-redis:
+    image: bitnami/redis:7.4.2
+    container_name: rate-watch-redis-${ENVIRONMENT}
+    restart: always
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT_NUMBER=${REDIS_PORT}
+      - REDIS_DATABASE=${REDIS_DB}
+    networks:
+      - rate-watch-network
+    expose:
+      - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+      - rate-watch-redis-data:/bitnami/redis/data
+    healthcheck:
+      test: redis-cli -a ${REDIS_PASSWORD} -p ${REDIS_PORT} ping
+      interval: 60s
+      timeout: 3s
+      retries: 3
+
+  rate-watch-prefect-server:
+    image: prefecthq/prefect:3-python3.11
+    container_name: rate-watch-prefect-server-${ENVIRONMENT}
+    restart: always
+    environment:
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - PREFECT_SERVER_DATABASE_SQLALCHEMY_CONNECT_ARGS_SEARCH_PATH=prefect,public
+
+      - PREFECT_SERVER_API_HOST=${PREFECT_SERVER_API_HOST}
+      - PREFECT_SERVER_UI_API_URL=http://${PREFECT_SERVER_API_HOST}:${PREFECT_PORT}/api
+
+      - PREFECT_MESSAGING_BROKER=prefect_redis.messaging
+      - PREFECT_MESSAGING_CACHE=prefect_redis.messaging
+      - PREFECT_REDIS_MESSAGING_HOST=${REDIS_HOST}
+      - PREFECT_REDIS_MESSAGING_PORT=${REDIS_PORT}
+      - PREFECT_REDIS_MESSAGING_DB=${REDIS_DB}
+      - PREFECT_REDIS_MESSAGING_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - rate-watch-network
+    expose:
+      - ${PREFECT_PORT}
+    ports:
+      - ${PREFECT_PORT}:${PREFECT_PORT}
+    command: prefect server start --host ${PREFECT_SERVER_API_HOST} --port ${PREFECT_PORT} --no-services
+    depends_on:
+      - rate-watch-db
+      - rate-watch-redis
+    healthcheck:
+      test: python -c "import urllib.request as u; u.urlopen('http://localhost:${PREFECT_PORT}/api/health', timeout=2)"
+      interval: 60s
+      timeout: 5s
+      retries: 5
+
+  rate-watch-prefect-services:
+    image: prefecthq/prefect:3-python3.11
+    container_name: rate-watch-prefect-services-${ENVIRONMENT}
+    restart: always
+    environment:
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - PREFECT_SERVER_DATABASE_SQLALCHEMY_CONNECT_ARGS_SEARCH_PATH=prefect,public
+
+      - PREFECT_MESSAGING_BROKER=prefect_redis.messaging
+      - PREFECT_MESSAGING_CACHE=prefect_redis.messaging
+      - PREFECT_REDIS_MESSAGING_HOST=${REDIS_HOST}
+      - PREFECT_REDIS_MESSAGING_PORT=${REDIS_PORT}
+      - PREFECT_REDIS_MESSAGING_DB=${REDIS_DB}
+      - PREFECT_REDIS_MESSAGING_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - rate-watch-network
+    command: prefect server services start
+    depends_on:
+      - rate-watch-prefect-server
+      - rate-watch-redis
+
+  rate-watch-prefect-worker:
+    container_name: rate-watch-prefect-worker-${ENVIRONMENT}
+    restart: always
+    build:
+      context: ./src
+    working_dir: /usr/RateWatch/src
+    command: python -m flows.serve
+    env_file: ./src/.env.${ENVIRONMENT}
+    environment:
+      - PREFECT_API_URL=http://rate-watch-prefect-server:${PREFECT_PORT}/api
+    networks:
+      - rate-watch-network
+    depends_on:
+      - rate-watch-db
+      - rate-watch-s3
+      - rate-watch-prefect-server
+
+volumes:
+  rate-watch-db-data:
+  rate-watch-s3-data:
+  rate-watch-redis-data:
+
+networks:
+  rate-watch-network:
+    name: rate-watch-network-${ENVIRONMENT}
+    external: false
