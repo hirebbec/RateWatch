@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY_ID: str = "rate-watch-s3"
     MINIO_SECRET_ACCESS_KEY: str = "rate-watch-s3"
     MINIO_REGION_NAME: str = "eu-central-1"
-    MINIO_DEFAULT_BUCKET: str = "dtp-bucket"
+    MINIO_DEFAULT_BUCKET: str = "rate-watch-bucket"
 
     REDIS_HOST: str = "rate-watch-redis"
     REDIS_PORT: int = 6579

@@ -1,9 +1,12 @@
+import asyncio
+
 import uvicorn
 from fastapi import FastAPI
 
 from api.router import api_router
 from core.config import settings
 from core.middlewares import middleware
+from flows.bronze import bronze_exchange_rates_flow
 
 app = FastAPI(
     title=settings().PROJECT_NAME,
@@ -17,6 +20,8 @@ app.include_router(api_router)
 
 
 if __name__ == "__main__":
+    asyncio.run(bronze_exchange_rates_flow())
+
     uvicorn.run(
         "main:app",
         host=settings().SERVER_HOST,

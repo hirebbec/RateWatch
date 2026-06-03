@@ -120,8 +120,10 @@ services:
       - ${PREFECT_PORT}:${PREFECT_PORT}
     command: prefect server start --host ${PREFECT_SERVER_API_HOST} --port ${PREFECT_PORT} --no-services
     depends_on:
-      - rate-watch-db
-      - rate-watch-redis
+      rate-watch-db:
+        condition: service_healthy
+      rate-watch-redis:
+        condition: service_healthy
     healthcheck:
       test: python -c "import urllib.request as u; u.urlopen('http://localhost:${PREFECT_PORT}/api/health', timeout=2)"
       interval: 60s
@@ -148,25 +150,30 @@ services:
       - rate-watch-network
     command: prefect server services start
     depends_on:
-      - rate-watch-prefect-server
-      - rate-watch-redis
+      rate-watch-prefect-server:
+        condition: service_healthy
+      rate-watch-db:
+        condition: service_healthy
+      rate-watch-redis:
+        condition: service_healthy
 
   rate-watch-prefect-worker:
+    image: prefecthq/prefect:3-python3.11
     container_name: rate-watch-prefect-worker-${ENVIRONMENT}
     restart: always
-    build:
-      context: ./src
-    working_dir: /usr/RateWatch/src
-    command: python -m flows.serve
+    command: prefect worker start --pool local-pool
     env_file: ./src/.env.${ENVIRONMENT}
     environment:
       - PREFECT_API_URL=http://rate-watch-prefect-server:${PREFECT_PORT}/api
     networks:
       - rate-watch-network
     depends_on:
-      - rate-watch-db
-      - rate-watch-s3
-      - rate-watch-prefect-server
+      rate-watch-prefect-server:
+        condition: service_healthy
+      rate-watch-db:
+        condition: service_healthy
+      rate-watch-redis:
+        condition: service_healthy
 
 volumes:
   rate-watch-db-data:
