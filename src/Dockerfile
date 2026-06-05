@@ -1,6 +1,6 @@
 FROM python:3.13-alpine
 
-WORKDIR /usr/RatrWatch/src
+WORKDIR /usr/RateWatch/src
 
 ENV PYTHONUNBUFFERED=1 \
     TZ="Europe/Moscow"

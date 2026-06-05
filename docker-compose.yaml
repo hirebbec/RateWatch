@@ -158,7 +158,8 @@ services:
         condition: service_healthy
 
   rate-watch-prefect-worker:
-    image: prefecthq/prefect:3-python3.11
+    build:
+      context: ./src
     container_name: rate-watch-prefect-worker-${ENVIRONMENT}
     restart: always
     command: prefect worker start --pool local-pool
@@ -174,6 +175,25 @@ services:
         condition: service_healthy
       rate-watch-redis:
         condition: service_healthy
+
+  rate-watch-prefect-deploy:
+    build:
+      context: ./src
+    container_name: rate-watch-prefect-deploy-${ENVIRONMENT}
+    restart: "no"
+    working_dir: /usr/RateWatch/src
+    command: python -m flows.deploy
+    env_file: ./src/.env.${ENVIRONMENT}
+    environment:
+      - PREFECT_API_URL=http://rate-watch-prefect-server:${PREFECT_PORT}/api
+      - PYTHONPATH=/usr/RateWatch/src
+    networks:
+      - rate-watch-network
+    depends_on:
+      rate-watch-prefect-server:
+        condition: service_healthy
+      rate-watch-prefect-worker:
+        condition: service_started
 
 volumes:
   rate-watch-db-data:

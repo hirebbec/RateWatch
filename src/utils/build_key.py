@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 
-def build_bronze_rates_key(base_currency: str) -> str:
+def build_bronze_rates_key() -> str:
     timestamp = int(datetime.now(timezone.utc).timestamp())
 
-    return f"rates/{base_currency}/{timestamp}.json"
+    return f"rates/{timestamp}.html"
