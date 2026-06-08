@@ -8,7 +8,7 @@ from s3.storage import s3_storage_context
 @task(retries=3, retry_delay_seconds=10, name="fetch-task")
 async def fetch_rates() -> bytes:
     async with httpx.AsyncClient(
-        timeout=15,
+        timeout=settings().HTTP_TIMEOUT,
         follow_redirects=True,
         headers={
             "User-Agent": "RateWatch/0.1",

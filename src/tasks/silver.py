@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from prefect import task
 from datetime import datetime, date
 
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import insert
 
 from db.models import SilverRatesModel
 from db.session import get_async_session

@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 5000
     SERVER_WORKERS_COUNT: int = 5
 
+    HTTP_TIMEOUT: int = 15
+
     CBR_URL: str = "https://www.cbr.ru/currency_base/daily/"
 
     ENVIRONMENT: str = "local"
