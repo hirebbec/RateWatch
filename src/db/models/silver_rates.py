@@ -8,8 +8,8 @@ from db.models.base import BaseModel
 from db.models.mixins import IDMixin, CreatedAtMixin, UpdatedAtMixin
 
 
-class RatesModel(BaseModel, IDMixin, CreatedAtMixin, UpdatedAtMixin):
-    __tablename__ = 'rates'
+class SilverRatesModel(BaseModel, IDMixin, CreatedAtMixin, UpdatedAtMixin):
+    __tablename__ = "silver_rates"
 
     object_key: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     rates_timestamp: Mapped[date] = mapped_column(Date, nullable=False)

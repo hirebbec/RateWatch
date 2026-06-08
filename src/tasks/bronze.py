@@ -1,11 +1,9 @@
-import asyncio
 
 import httpx
 from prefect import task
 
 from core.config import settings
 from s3.storage import s3_storage_context
-
 
 
 @task(retries=3, retry_delay_seconds=10, name="fetch-task")

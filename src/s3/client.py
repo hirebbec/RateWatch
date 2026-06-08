@@ -16,10 +16,12 @@ def get_s3_session() -> Session:
         region_name=settings().MINIO_REGION_NAME,
     )
 
+
 async def get_s3_client() -> AsyncGenerator[AioBaseClient, None]:
     session = get_s3_session()
     async with session.client("s3", endpoint_url=settings().s3_dsn) as client:
         yield client
+
 
 @asynccontextmanager
 async def s3_client_context() -> AsyncIterator[AioBaseClient]:
