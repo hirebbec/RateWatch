@@ -1,14 +1,14 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, String, Numeric, UniqueConstraint
+from sqlalchemy import Date, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.models.base import BaseModel
-from db.models.mixins import IDMixin, CreatedAtMixin, UpdatedAtMixin
+from db.models.mixins import CreatedAtMixin, IDMixin, UpdatedAtMixin
 
 
-class GoldenRatesModel(BaseModel, IDMixin, CreatedAtMixin, UpdatedAtMixin):
+class GoldenRate(BaseModel, IDMixin, CreatedAtMixin, UpdatedAtMixin):
     __tablename__ = "golden_rates"
 
     rate_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)

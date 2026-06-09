@@ -13,9 +13,7 @@ def timer(func: Callable[..., Any]) -> Callable[..., Any]:
         async def async_wrapper(*args, **kwargs) -> Any:
             start_time = time.perf_counter()
             result = await func(*args, **kwargs)
-            logger.info(
-                f"Function {func.__name__} completed in {time.perf_counter() - start_time:.5f} seconds"
-            )
+            logger.info(f"Function {func.__name__} completed in {time.perf_counter() - start_time:.5f} seconds")
             return result
 
         return async_wrapper
@@ -26,9 +24,7 @@ def timer(func: Callable[..., Any]) -> Callable[..., Any]:
         def sync_wrapper(*args, **kwargs) -> Any:
             start_time = time.perf_counter()
             result = func(*args, **kwargs)
-            logger.info(
-                f"Function {func.__name__} completed in {time.perf_counter() - start_time:.5f} seconds"
-            )
+            logger.info(f"Function {func.__name__} completed in {time.perf_counter() - start_time:.5f} seconds")
             return result
 
         return sync_wrapper

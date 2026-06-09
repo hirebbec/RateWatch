@@ -57,9 +57,7 @@ class Settings(BaseSettings):
 
     @functools.cached_property
     def postgres_dsn(self) -> str:
-        postgres_host = (
-            "localhost" if self.ENVIRONMENT == "local" else self.POSTGRES_HOST
-        )
+        postgres_host = "localhost" if self.ENVIRONMENT == "local" else self.POSTGRES_HOST
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
             f"{postgres_host}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

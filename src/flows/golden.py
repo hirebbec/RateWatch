@@ -1,6 +1,6 @@
 from prefect import flow
 
-from tasks.golden import get_silver_rows, transform_to_gold, load_gold
+from tasks.golden import get_silver_rows, load_gold, transform_to_gold
 
 
 @flow(name="golden-flow")

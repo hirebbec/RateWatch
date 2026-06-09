@@ -1,12 +1,11 @@
+from datetime import date, datetime
 from typing import Any
 
 from bs4 import BeautifulSoup
 from prefect import task
-from datetime import datetime, date
+from sqlalchemy.dialects.postgresql import insert
 
-from sqlalchemy import insert
-
-from db.models import SilverRatesModel
+from db.models import SilverRates
 from db.session import get_async_session
 from s3.storage import s3_storage_context
 
@@ -82,7 +81,7 @@ async def upload_to_db(
 
     async with session_factory() as session:
         stmt = (
-            insert(SilverRatesModel)
+            insert(SilverRates)
             .values(
                 object_key=source_object_key,
                 rates_timestamp=date.fromisoformat(payload["rates_date"]),

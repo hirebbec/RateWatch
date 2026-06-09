@@ -31,9 +31,7 @@ class S3Storage:
             logger.error(f"Error downloading file: {e}")
             raise
 
-    async def upload_file(
-        self, full_key: str, data: bytes, content_type: str | None = None
-    ) -> bool:
+    async def upload_file(self, full_key: str, data: bytes, content_type: str | None = None) -> bool:
         if content_type is None:
             content_type = "text/plain"
 

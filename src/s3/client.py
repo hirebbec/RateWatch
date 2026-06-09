@@ -1,6 +1,6 @@
 import functools
-from typing import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator, AsyncIterator
 
 from aioboto3 import Session
 from aiobotocore.client import AioBaseClient

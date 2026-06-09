@@ -29,9 +29,7 @@ if settings().USE_TIMER_MIDDLEWARE:
             response = await call_next(request)
             process_time = time.perf_counter() - start_time
 
-            message = (
-                f"{request.method} {request.url.path} - {1000 * process_time:.4f} ms"
-            )
+            message = f"{request.method} {request.url.path} - {1000 * process_time:.4f} ms"
             logger.debug(message)
 
             return response
