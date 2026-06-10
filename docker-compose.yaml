@@ -118,7 +118,7 @@ services:
       - ${PREFECT_PORT}
     ports:
       - ${PREFECT_PORT}:${PREFECT_PORT}
-    command: prefect server start --host ${PREFECT_SERVER_API_HOST} --port ${PREFECT_PORT} --no-services
+    command: prefect server start --host 0.0.0.0 --port ${PREFECT_PORT} --no-services
     depends_on:
       rate-watch-db:
         condition: service_healthy

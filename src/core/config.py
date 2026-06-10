@@ -20,6 +20,10 @@ class Settings(BaseSettings):
 
     CBR_URL: str = "https://www.cbr.ru/currency_base/daily/"
 
+    MAIN_DEPLOYMENT_NAME: str = "main-deployment"
+    MAIN_FLOW_NAME: str = "main-flow"
+    MAIN_FLOW_INTERVAL_IN_SEC: int = 300
+
     ENVIRONMENT: str = "local"
     TIME_ZONE: timezone = timezone(offset=timedelta(hours=+3))
     CORS_ALLOW_ORIGIN_LIST: str = "*"
@@ -49,7 +53,9 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     PREFECT_PORT: int = 4500
-    PREFECT_SERVER_API_HOST: str = "rate-watch-prefect-server"
+    PREFECT_SERVER_API_HOST: str = "0.0.0.0"
+    PREFECT_API_URL: str = f"http://{PREFECT_SERVER_API_HOST}:{PREFECT_PORT}/api"
+
 
     @functools.cached_property
     def cors_allow_origins(self) -> list[str]:
